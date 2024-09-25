@@ -121,3 +121,5 @@ Example: FlussoFLS110 sensor conversion routines - Signaloid version
 
 [^1]: [FLS110 Datasheet](https://www.farnell.com/datasheets/3625949.pdf).
 
+[^2]: [GNU Scientific Library](https://www.gnu.org/software/gsl/).
+
