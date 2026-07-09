@@ -39,10 +39,10 @@ Configuration constants and demo-specific definitions.
 
 ## On MacOS (with MacPorts)
 ```
-gcc -03 -I. -I/opt/local/include main.c utilities.c common.c uxhw.c -L/opt/local/lib -lgsl -lgslcblas
+gcc -03 -I. -I/opt/local/include main.c kernel.c utilities.c common.c uxhw.c -L/opt/local/lib -lgsl -lgslcblas
 ```
 
 ## On Linux
 ```
-gcc -03 -I. -I/opt/local/include main.c utilities.c common.c uxhw.c -L/opt/local/lib -lgsl -lgslcblas -lm
+gcc -03 -I. -I/opt/local/include main.c kernel.c utilities.c common.c uxhw.c -L/opt/local/lib -lgsl -lgslcblas -lm
 ```
