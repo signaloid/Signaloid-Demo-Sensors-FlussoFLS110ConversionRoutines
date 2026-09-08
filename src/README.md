@@ -1,7 +1,24 @@
 # Source code:
 
 ## main.c
-Implementation of the calculation of each calibrated sensor output for FLS110 sensor.
+Top-level driver: parses command-line arguments, dispatches to the UxHw and
+Monte Carlo evaluation paths in `kernel.c`, and reports/writes the selected
+output(s).
+
+## kernel.c/h
+Defines the FLS110 output selection (`FlussoFLS110OutputVariableIndex`) and
+input variable indices, and the top-level kernel entry points that choose
+between the UxHw (`flusso-fls110-uxhw.c`) and Monte Carlo
+(`flusso-fls110-monte-carlo.c`) evaluation paths.
+
+## flusso-fls110-uxhw.c/h
+Calculates the distributional value of the selected FLS110 output using UxHw
+distributional arithmetic, from a single distributional evaluation of the
+sensor's inputs.
+
+## flusso-fls110-monte-carlo.c/h
+Runs repeated independent evaluations of the FLS110 conversion routine, one
+per Monte Carlo sample, for the native Monte Carlo build.
 
 ## utilities.c/h
 These contain utility methods for parsing, setting, and reporting
@@ -32,17 +49,12 @@ which is included as a submodule in `submodules/compat`.
 Signaloid cores use this file to identify the source codes they will use when
 building the C/C++ demo application.
 
-## utilities-config.h
-Configuration constants and demo-specific definitions.
-
 # To Build Natively on Non-Signaloid Platforms
 
-## On MacOS (with MacPorts)
+From the repository root, run:
 ```
-gcc -03 -I. -I/opt/local/include main.c kernel.c utilities.c common.c uxhw.c -L/opt/local/lib -lgsl -lgslcblas
+make local-build
 ```
-
-## On Linux
-```
-gcc -03 -I. -I/opt/local/include main.c kernel.c utilities.c common.c uxhw.c -L/opt/local/lib -lgsl -lgslcblas -lm
-```
+This builds the `demo-native-mc` executable at the repository root, using the
+host `gcc` toolchain and the UxHw compatibility shim in `submodules/compat`.
+See the [Prerequisites](../README.md#prerequisites) section of the root README for installing GSL and the other build dependencies.

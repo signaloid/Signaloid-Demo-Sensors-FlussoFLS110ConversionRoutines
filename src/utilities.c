@@ -1,5 +1,5 @@
 /*
- *	Copyright (c) 2026, Signaloid.
+ *	Copyright (c) 2024-2026, Signaloid.
  *
  *	Permission is hereby granted, free of charge, to any person obtaining a copy
  *	of this software and associated documentation files (the "Software"), to deal
@@ -72,12 +72,55 @@ setDefaultCommandLineArguments(CommandLineArguments * arguments)
 	return;
 }
 
+#ifdef NO_OS_AVAILABLE
+CommonConstantReturnType
+setNoOSCommandLineArguments(CommandLineArguments * arguments)
+{
+	if (arguments == NULL)
+	{
+		fputs("Error: The provided pointer to arguments is NULL.\n", stderr);
+
+		return kCommonConstantReturnTypeError;
+	}
+
+	/*
+	 *	Start from the defaults so that every field is initialized, then
+	 *	override the ones the no-OS build fixes. This demo has no
+	 *	demo-specific fields beyond `common`, and no step count to
+	 *	override (these sensor conversion routines simulate no path).
+	 */
+	setDefaultCommandLineArguments(arguments);
+
+	arguments->common.numberOfMonteCarloIterations  = 1;
+	arguments->common.outputSelect                  = kFlussoFLS110OutputVariableIndexMax;
+	arguments->common.isTimingEnabled               = false;
+	arguments->common.isMonteCarloMode              = false;
+	arguments->common.isOutputJSONMode              = false;
+	arguments->common.isWriteToFileEnabled          = false;
+
+	return kCommonConstantReturnTypeSuccess;
+}
+#endif
+
 CommonConstantReturnType
 getCommandLineArguments(
 	int                     argc,
 	char *                  argv[],
 	CommandLineArguments *  arguments)
 {
+#ifdef NO_OS_AVAILABLE
+	/*
+	 *	The no-OS build has no command line to parse, so ignore `argc`
+	 *	and `argv` and use the hard-coded configuration instead.
+	 */
+	(void) argc;
+	(void) argv;
+
+	puts("Using hard coded command line arguments");
+
+	return setNoOSCommandLineArguments(arguments);
+
+#else
 	DemoOption demoSpecificOptions = { 0 };
 
 	if (arguments == NULL)
@@ -151,6 +194,8 @@ getCommandLineArguments(
 			arguments->common.outputSelect,
 			kFlussoFLS110OutputVariableIndexMax
 		);
+
+		return kCommonConstantReturnTypeError;
 	}
 	/*
 	 *	When all outputs are selected, we cannot be in benchmarking mode or Monte Carlo mode.
@@ -166,4 +211,6 @@ getCommandLineArguments(
 	}
 
 	return kCommonConstantReturnTypeSuccess;
+
+#endif
 }

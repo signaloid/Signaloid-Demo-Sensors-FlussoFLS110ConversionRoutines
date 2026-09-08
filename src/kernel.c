@@ -1,5 +1,5 @@
 /*
- *	Copyright (c) 2026, Signaloid.
+ *	Copyright (c) 2024-2026, Signaloid.
  *
  *	Permission is hereby granted, free of charge, to any person obtaining a copy
  *	of this software and associated documentation files (the "Software"), to deal
@@ -20,11 +20,45 @@
  *	SOFTWARE.
  */
 
+#include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
+#include <uxhw.h>
 #include "kernel.h"
+#include "flusso-fls110-uxhw.h"
+#include "flusso-fls110-monte-carlo.h"
 
+void
+FlussoFLS110_setInputVariablesViaUxHwCall(double * inputVariables)
+{
+	inputVariables[kFlussoFLS110InputVariableIndexHxfer] = UxHwDoubleUniformDist(
+		kFlussoFLS110DefaultInputVariableHxferUniformDistLow,
+		kFlussoFLS110DefaultInputVariableHxferUniformDistHigh
+	);
+
+	inputVariables[kFlussoFLS110InputVariableIndexTflow] = UxHwDoubleUniformDist(
+		kFlussoFLS110DefaultInputVariableTflowUniformDistLow,
+		kFlussoFLS110DefaultInputVariableTflowUniformDistHigh
+	);
+
+	inputVariables[kFlussoFLS110InputVariableIndexT0] = UxHwDoubleUniformDist(
+		kFlussoFLS110DefaultInputVariableT0UniformDistLow,
+		kFlussoFLS110DefaultInputVariableT0UniformDistHigh
+	);
+
+	inputVariables[kFlussoFLS110InputVariableIndexPflow] = UxHwDoubleUniformDist(
+		kFlussoFLS110DefaultInputVariablePflowUniformDistLow,
+		kFlussoFLS110DefaultInputVariablePflowUniformDistHigh
+	);
+
+	inputVariables[kFlussoFLS110InputVariableIndexP0] = UxHwDoubleUniformDist(
+		kFlussoFLS110DefaultInputVariableP0UniformDistLow,
+		kFlussoFLS110DefaultInputVariableP0UniformDistHigh
+	);
+
+	return;
+}
 
 double
 FlussoFLS110_calculateOutput(uint8_t outputSelect, double *  inputVariables, double *  outputVariables)
@@ -58,7 +92,6 @@ FlussoFLS110_calculateOutput(uint8_t outputSelect, double *  inputVariables, dou
 	if (calculateAllOutputs ||
 	    outputSelect == kFlussoFLS110OutputVariableIndexCalibratedDifferentialPressureOutput)
 	{
-
 		Tflow   = inputVariables[kFlussoFLS110InputVariableIndexTflow];
 		T0      = inputVariables[kFlussoFLS110InputVariableIndexT0];
 		Pflow   = inputVariables[kFlussoFLS110InputVariableIndexPflow];
@@ -69,4 +102,51 @@ FlussoFLS110_calculateOutput(uint8_t outputSelect, double *  inputVariables, dou
 	}
 
 	return calibratedValue;
+}
+
+double
+flussoFLS110SingleEvaluation(uint8_t outputSelect, double * outputVariables)
+{
+	double inputVariables[kFlussoFLS110InputVariableIndexMax];
+
+	/*
+	 *	Set input distribution values via a single call: on real UxHw
+	 *	hardware, `UxHwDoubleUniformDist()` yields a full distributional
+	 *	value per input, so one call is all a distributional evaluation
+	 *	needs. Run repeatedly (once per Monte Carlo iteration), it yields
+	 *	one freshly sampled value per input each time.
+	 */
+	FlussoFLS110_setInputVariablesViaUxHwCall(inputVariables);
+
+	return FlussoFLS110_calculateOutput(outputSelect, inputVariables, outputVariables);
+}
+
+double
+flussoFLS110CalculateOutputUxHw(
+	size_t      outputSelect,
+	double *    outputVariables,
+	double *    monteCarloOutputSamples)
+{
+	double result;
+
+	result = flussoFLS110UxHw((uint8_t) outputSelect, outputVariables);
+
+	monteCarloOutputSamples[0] = result;
+
+	return result;
+}
+
+double
+flussoFLS110CalculateOutputMonteCarlo(
+	size_t      numberOfMonteCarloIterations,
+	size_t      outputSelect,
+	double *    outputVariables,
+	double *    monteCarloOutputSamples)
+{
+	return flussoFLS110MonteCarlo(
+		numberOfMonteCarloIterations,
+		(uint8_t) outputSelect,
+		outputVariables,
+		monteCarloOutputSamples
+	);
 }
