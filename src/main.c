@@ -1,5 +1,5 @@
 /*
- *	Copyright (c) 2026, Signaloid.
+ *	Copyright (c) 2024-2026, Signaloid.
  *
  *	Permission is hereby granted, free of charge, to any person obtaining a copy
  *	of this software and associated documentation files (the "Software"), to deal
@@ -30,41 +30,11 @@
 #include "utilities.h"
 #include "kernel.h"
 
-/**
- *	@brief  Sets the Input Variables via call to UxHw Parametric function.
- *
- *	@param  inputVariables	: An array of double values, where the function writes the distributional data.
- */
-static void
-setInputVariablesViaUxHwCall(double * inputVariables)
-{
-	inputVariables[kFlussoFLS110InputVariableIndexHxfer] = UxHwDoubleUniformDist(
-		kFlussoFLS110DefaultInputVariableHxferUniformDistLow,
-		kFlussoFLS110DefaultInputVariableHxferUniformDistHigh
-	);
+#ifdef NO_OS_AVAILABLE
 
-	inputVariables[kFlussoFLS110InputVariableIndexTflow] = UxHwDoubleUniformDist(
-		kFlussoFLS110DefaultInputVariableTflowUniformDistLow,
-		kFlussoFLS110DefaultInputVariableTflowUniformDistHigh
-	);
-
-	inputVariables[kFlussoFLS110InputVariableIndexT0] = UxHwDoubleUniformDist(
-		kFlussoFLS110DefaultInputVariableT0UniformDistLow,
-		kFlussoFLS110DefaultInputVariableT0UniformDistHigh
-	);
-
-	inputVariables[kFlussoFLS110InputVariableIndexPflow] = UxHwDoubleUniformDist(
-		kFlussoFLS110DefaultInputVariablePflowUniformDistLow,
-		kFlussoFLS110DefaultInputVariablePflowUniformDistHigh
-	);
-
-	inputVariables[kFlussoFLS110InputVariableIndexP0] = UxHwDoubleUniformDist(
-		kFlussoFLS110DefaultInputVariableP0UniformDistLow,
-		kFlussoFLS110DefaultInputVariableP0UniformDistHigh
-	);
-
-	return;
-}
+void
+returnZeroNoOS(void);
+#endif
 
 int
 main(int argc, char *  argv[])
@@ -75,8 +45,7 @@ main(int argc, char *  argv[])
 	double *        monteCarloOutputSamples = NULL;
 	clock_t         start;
 	clock_t         end;
-	double          cpuTimeUsedSeconds;
-	double          inputVariables[kFlussoFLS110InputVariableIndexMax];
+	double          cpuTimeUsedSeconds = 0.0;
 	double          outputVariables[kFlussoFLS110OutputVariableIndexMax];
 	const char *    outputVariableNames[kFlussoFLS110OutputVariableIndexMax] = {
 		"Calibrated Mass Flow",
@@ -86,8 +55,13 @@ main(int argc, char *  argv[])
 		[kFlussoFLS110OutputVariableIndexCalibratedMassFlowOutput]              = "Calibrated mass flow output in sccm",
 		[kFlussoFLS110OutputVariableIndexCalibratedDifferentialPressureOutput]  = "Calibrated differential pressure output in Pa"
 	};
-	const char *    applicationDescription = "Flusso FLS110 Conversion Routines";
-	MeanAndVariance meanAndVariance;
+	kOutputVariableTypeIndex    outputVariableTypes[kFlussoFLS110OutputVariableIndexMax] = {
+		[kFlussoFLS110OutputVariableIndexCalibratedMassFlowOutput]              = kOutputVariableTypeDistribution,
+		[kFlussoFLS110OutputVariableIndexCalibratedDifferentialPressureOutput]  = kOutputVariableTypeDistribution
+	};
+	const char *                applicationDescription = "Flusso FLS110 Conversion Routines";
+	MeanAndVariance             meanAndVariance;
+	(void) outputVariableTypes;
 
 	/*
 	 *	Get command line arguments.
@@ -97,14 +71,15 @@ main(int argc, char *  argv[])
 		return kCommonConstantReturnTypeError;
 	}
 
-	if (arguments.common.isMonteCarloMode)
-	{
-		monteCarloOutputSamples = (double *) checkedMalloc(
-			arguments.common.numberOfMonteCarloIterations * sizeof(double),
-			__FILE__,
-			__LINE__
-		);
-	}
+	/*
+	 *	MonteCarlo output samples are used even in the Laplace use case to store
+	 *	the result of intermediate steps.
+	 */
+	monteCarloOutputSamples = (double *) checkedMalloc(
+		(arguments.common.numberOfMonteCarloIterations > 0 ? arguments.common.numberOfMonteCarloIterations : 1) * sizeof(double),
+		__FILE__,
+		__LINE__
+	);
 
 	/*
 	 *	Start timing.
@@ -114,38 +89,43 @@ main(int argc, char *  argv[])
 		start = clock();
 	}
 
-	for (size_t ii = 0; ii < arguments.common.numberOfMonteCarloIterations; ii++)
-	{
-		/*
-		 *	Set input distribution values, inside the main computation
-		 *	loop, so that it can also generate samples in the native
-		 *	Monte Carlo Execution Mode.
-		 */
-		setInputVariablesViaUxHwCall(inputVariables);
-
-		calibratedSensorOutput = FlussoFLS110_calculateOutput(arguments.common.outputSelect, inputVariables, outputVariables);
-
-		/*
-		 *	For this application, calibratedSensorOutput is the item we track.
-		 */
-		if (arguments.common.isMonteCarloMode)
-		{
-			monteCarloOutputSamples[ii] = calibratedSensorOutput;
-		}
-	}
-
 	/*
-	 *	If not doing Laplace version, then approximate the cost of the third phase of
-	 *	Monte Carlo (post-processing), by calculating the mean and variance.
+	 *	Dispatch to the mode-specific kernel. The Monte Carlo loop lives
+	 *	inside `flussoFLS110CalculateOutputMonteCarlo`; UxHw mode runs a
+	 *	single distributional evaluation inside
+	 *	`flussoFLS110CalculateOutputUxHw`. Both take the fields they need as
+	 *	scalars, so this is the only place that unpacks
+	 *	`CommandLineArguments` for the kernel.
 	 */
 	if (arguments.common.isMonteCarloMode)
 	{
+		calibratedSensorOutput = flussoFLS110CalculateOutputMonteCarlo(
+			arguments.common.numberOfMonteCarloIterations,
+			arguments.common.outputSelect,
+			outputVariables,
+			monteCarloOutputSamples
+		);
+
+		/*
+		 *	Approximate the cost of the third phase of Monte Carlo
+		 *	(post-processing), by calculating the mean and variance.
+		 */
 		meanAndVariance = calculateMeanAndVarianceOfDoubleSamples(
 			monteCarloOutputSamples,
 			arguments.common.numberOfMonteCarloIterations
 		);
 		calibratedSensorOutput = meanAndVariance.mean;
 	}
+	else
+	{
+		calibratedSensorOutput = flussoFLS110CalculateOutputUxHw(
+			arguments.common.outputSelect,
+			outputVariables,
+			monteCarloOutputSamples
+		);
+	}
+
+	(void) calibratedSensorOutput;
 
 	/*
 	 *	Stop timing.
@@ -187,7 +167,7 @@ main(int argc, char *  argv[])
 	 */
 	if (arguments.common.isTimingEnabled)
 	{
-		printf("\nCPU time used: %lf seconds\n", cpuTimeUsedSeconds);
+		printf("\nCPU time used: %" SignaloidParticleModifier "lf seconds\n", cpuTimeUsedSeconds);
 	}
 
 	/*
@@ -217,9 +197,14 @@ main(int argc, char *  argv[])
 			(uint64_t) (cpuTimeUsedSeconds * 1000000),
 			arguments.common.numberOfMonteCarloIterations
 		);
-
-		free(monteCarloOutputSamples);
 	}
+	free(monteCarloOutputSamples);
+
+#ifdef NO_OS_AVAILABLE
+	returnZeroNoOS();
+#else
 
 	return 0;
+
+#endif
 }
