@@ -68,3 +68,11 @@ getCommandLineArguments(int argc, char *  argv[], CommandLineArguments *  argume
 CommonConstantReturnType
 setNoOSCommandLineArguments(CommandLineArguments * arguments);
 #endif
+
+/**
+ *	@brief	Set the default values for the command-line arguments.
+ *
+ *	@param	arguments	: command-line arguments pointer.
+ */
+CommonConstantReturnType
+setDefaultCommandLineArguments(CommandLineArguments * arguments);

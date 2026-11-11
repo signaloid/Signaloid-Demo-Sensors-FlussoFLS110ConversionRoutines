@@ -42,7 +42,7 @@ flussoFLS110MonteCarlo(
 		 *	distribution on real UxHw hardware instead yields one
 		 *	freshly sampled value per input each iteration here.
 		 */
-		result = flussoFLS110SingleEvaluation(outputSelect, outputVariables);
+		result = FlussoFLS110SingleEvaluation(outputSelect, outputVariables);
 
 		monteCarloOutputSamples[ii] = result;
 	}

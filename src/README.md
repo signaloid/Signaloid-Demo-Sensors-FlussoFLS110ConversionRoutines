@@ -1,32 +1,32 @@
-# Source code:
+# Source Code
 
-## main.c
-Top-level driver: parses command-line arguments, dispatches to the UxHw and
+## `main.c`
+Top-level driver. It parses command-line arguments, dispatches to the UxHw® and
 Monte Carlo evaluation paths in `kernel.c`, and reports/writes the selected
 output(s).
 
-## kernel.c/h
+## `kernel.c` and `kernel.h`
 Defines the FLS110 output selection (`FlussoFLS110OutputVariableIndex`) and
 input variable indices, and the top-level kernel entry points that choose
 between the UxHw (`flusso-fls110-uxhw.c`) and Monte Carlo
 (`flusso-fls110-monte-carlo.c`) evaluation paths.
 
-## flusso-fls110-uxhw.c/h
+## `flusso-fls110-uxhw.c` and `flusso-fls110-uxhw.h`
 Calculates the distributional value of the selected FLS110 output using UxHw
 distributional arithmetic, from a single distributional evaluation of the
 sensor's inputs.
 
-## flusso-fls110-monte-carlo.c/h
+## `flusso-fls110-monte-carlo.c` and `flusso-fls110-monte-carlo.h`
 Runs repeated independent evaluations of the FLS110 conversion routine, one
 per Monte Carlo sample, for the native Monte Carlo build.
 
-## utilities.c/h
+## `utilities.c` and `utilities.h`
 These contain utility methods for parsing, setting, and reporting
 the usage of demo-specific command-line arguments of C/C++ demo applications.
 These methods call similar methods from `common.c` for handling
 command-line arguments common to all of our C/C++ demo applications.
 
-## common.c/h
+## `common.c` and `common.h`
 These contain utility methods for parsing, setting, and reporting
 the usage of command-line arguments common to all of our C/C++ demo applications,
 as well as other methods that we commonly make use across our
@@ -35,7 +35,7 @@ source files are symlinks to the original files contained in the repository
 [Signaloid-Demo-CommonUtilityRoutines](https://github.com/signaloid/Signaloid-Demo-CommonUtilityRoutines)
 which is included as a submodule in `submodules/common`.
 
-## uxhw.c/h
+## `uxhw.c` and `uxhw.h`
 These contain methods that implement the probabilistic versions of the methods
 in the UxHw API (e.g., `UxHwDoubleGaussDist`) and uses the GNU Scientific Library (GSL)
 random number generators to achieve that. This allows building our C/C++ demo applications

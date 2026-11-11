@@ -27,5 +27,5 @@
 double
 flussoFLS110UxHw(uint8_t outputSelect, double * outputVariables)
 {
-	return flussoFLS110SingleEvaluation(outputSelect, outputVariables);
+	return FlussoFLS110SingleEvaluation(outputSelect, outputVariables);
 }

@@ -30,7 +30,7 @@
 #include "flusso-fls110-monte-carlo.h"
 
 void
-FlussoFLS110_setInputVariablesViaUxHwCall(double * inputVariables)
+FlussoFLS110SetInputVariablesViaUxHwCall(double * inputVariables)
 {
 	inputVariables[kFlussoFLS110InputVariableIndexHxfer] = UxHwDoubleUniformDist(
 		kFlussoFLS110DefaultInputVariableHxferUniformDistLow,
@@ -63,7 +63,7 @@ FlussoFLS110_setInputVariablesViaUxHwCall(double * inputVariables)
 double
 FlussoFLS110_calculateOutput(uint8_t outputSelect, double *  inputVariables, double *  outputVariables)
 {
-	double  calibratedValue;
+	double  calibratedValue = 0;
 	double  m;
 	double  h;
 
@@ -105,7 +105,7 @@ FlussoFLS110_calculateOutput(uint8_t outputSelect, double *  inputVariables, dou
 }
 
 double
-flussoFLS110SingleEvaluation(uint8_t outputSelect, double * outputVariables)
+FlussoFLS110SingleEvaluation(uint8_t outputSelect, double * outputVariables)
 {
 	double inputVariables[kFlussoFLS110InputVariableIndexMax];
 
@@ -116,13 +116,13 @@ flussoFLS110SingleEvaluation(uint8_t outputSelect, double * outputVariables)
 	 *	needs. Run repeatedly (once per Monte Carlo iteration), it yields
 	 *	one freshly sampled value per input each time.
 	 */
-	FlussoFLS110_setInputVariablesViaUxHwCall(inputVariables);
+	FlussoFLS110SetInputVariablesViaUxHwCall(inputVariables);
 
 	return FlussoFLS110_calculateOutput(outputSelect, inputVariables, outputVariables);
 }
 
 double
-flussoFLS110CalculateOutputUxHw(
+FlussoFLS110CalculateOutputUxHw(
 	size_t      outputSelect,
 	double *    outputVariables,
 	double *    monteCarloOutputSamples)
@@ -137,9 +137,9 @@ flussoFLS110CalculateOutputUxHw(
 }
 
 double
-flussoFLS110CalculateOutputMonteCarlo(
-	size_t      numberOfMonteCarloIterations,
+FlussoFLS110CalculateOutputMonteCarlo(
 	size_t      outputSelect,
+	size_t      numberOfMonteCarloIterations,
 	double *    outputVariables,
 	double *    monteCarloOutputSamples)
 {
