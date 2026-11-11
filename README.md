@@ -2,7 +2,7 @@
 [<img src="https://assets.signaloid.io/add-to-signaloid-cloud-logo-light-latest.png#gh-light-mode-only" alt="[Add to signaloid.io]" height="30">](https://signaloid.io/repositories?connect=https://github.com/signaloid/Signaloid-Demo-Sensors-FlussoFLS110ConversionRoutines#gh-light-mode-only)
 
 # Flusso FLS110 Sensor Calibration Use Case
-Example demonstrating real-time output uncertainty estimation for calibrated ADC values from the Flusso FLS110 sensor[^1].
+Example demonstrating real-time output distribution estimation for calibrated ADC values from the Flusso FLS110 sensor[^1].
 
 ## Introduction
 The FLS110 is an analogue mass flow sensor.
@@ -78,19 +78,19 @@ cat data.out
 ## Inputs
 The inputs to the FLS110 sensor conversion algorithms are the heat power transfer of the gas in flow
 in Watts ($h$),
-the temperature flow in Kelvin measured by the firmware ($T_{flow}$), the temerature in Kelvin when the zero-point offset was determined ($T_0$), the pressure flow in Pascal measured by the firmware ($P_{flow}$) and the pressure in
-Pascal when the zero-point offset was determined ($P_0$). The algorithm models the uncertainty in the
+the temperature flow in Kelvin measured by the firmware ($T_{flow}$), the temperature in Kelvin when the zero-point offset was determined ($T_0$), the pressure flow in Pascal measured by the firmware ($P_{flow}$) and the pressure in
+Pascal when the zero-point offset was determined ($P_0$). The algorithm models the
 above quantities using uniform distributions.
 
-The uncertainty in $h$ is modeled as a (`UniformDist(0.01, 0.05)`) Watts.
+The input $h$ is modeled as a (`UniformDist(0.01, 0.05)`) Watts.
 
-The uncertainty in $T_{flow}$ is modeled as a (`UniformDist(293.0, 294.0)`) Kelvin.
+The input $T_{flow}$ is modeled as a (`UniformDist(293.0, 294.0)`) Kelvin.
 
-The uncertainty in $T_0$ is modeled as a (`UniformDist(273.0, 273.5)`) Kelvin.
+The input $T_0$ is modeled as a (`UniformDist(273.0, 273.5)`) Kelvin.
 
-The uncertainty in $P_{flow}$ is modeled as a (`UniformDist(420.0, 425.0)`) kPa.
+The input $P_{flow}$ is modeled as a (`UniformDist(420.0, 425.0)`) kPa.
 
-The uncertainty in $P_0$ is modeled as a (`UniformDist(400.0, 405.0)`) kPa.
+The input $P_0$ is modeled as a (`UniformDist(400.0, 405.0)`) kPa.
 
 
 ## Outputs
@@ -135,7 +135,6 @@ Example: FlussoFLS110 sensor conversion routines - Signaloid version
 	[-S, --select-output <output : int>] (Compute 0-indexed output. Calculate all possible outputs if equal to 2. Default value: 2.)
 	[-M, --multiple-executions <Number of executions : int (Default: 1)>] (Repeated execute kernel for benchmarking.)
 	[-T, --time] (Timing mode: Times and prints the timing of the kernel execution.)
-	[-b, --benchmarking] (Benchmarking mode: Generate outputs in format for benchmarking.)
 	[-j, --json] (Print output in JSON format.)
 	[-h, --help] (Display this help message.)
 ```

@@ -32,8 +32,8 @@
  *		its own fresh set of sensor inputs), writing each result into
  *		`monteCarloOutputSamples`.
  *
- *	@param	numberOfMonteCarloIterations	: Number of Monte Carlo iterations to run.
  *	@param	outputSelect			: Which output to calculate (or `kFlussoFLS110OutputVariableIndexMax` for all).
+ *	@param	numberOfMonteCarloIterations	: Number of Monte Carlo iterations to run.
  *	@param	outputVariables			: Array of size `kFlussoFLS110OutputVariableIndexMax`,
  *						  filled with the result of the final iteration.
  *	@param	monteCarloOutputSamples		: A pointer to an array where the selected output's

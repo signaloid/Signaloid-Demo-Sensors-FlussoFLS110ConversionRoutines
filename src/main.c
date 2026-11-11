@@ -41,17 +41,16 @@ main(int argc, char *  argv[])
 {
 	CommandLineArguments arguments = { 0 };
 
-	double          calibratedSensorOutput;
-	double *        monteCarloOutputSamples = NULL;
-	clock_t         start;
-	clock_t         end;
-	double          cpuTimeUsedSeconds = 0.0;
-	double          outputVariables[kFlussoFLS110OutputVariableIndexMax];
-	const char *    outputVariableNames[kFlussoFLS110OutputVariableIndexMax] = {
+	double *                    monteCarloOutputSamples = NULL;
+	clock_t                     start = 0;
+	clock_t                     end;
+	double                      cpuTimeUsedSeconds = 0.0;
+	double                      outputVariables[kFlussoFLS110OutputVariableIndexMax] = { 0 };
+	const char *                outputVariableNames[kFlussoFLS110OutputVariableIndexMax] = {
 		"Calibrated Mass Flow",
 		"Calibrated Differential Pressure"
 	};
-	const char *    outputVariableDescriptions[kFlussoFLS110OutputVariableIndexMax] = {
+	const char *                outputVariableDescriptions[kFlussoFLS110OutputVariableIndexMax] = {
 		[kFlussoFLS110OutputVariableIndexCalibratedMassFlowOutput]              = "Calibrated mass flow output in sccm",
 		[kFlussoFLS110OutputVariableIndexCalibratedDifferentialPressureOutput]  = "Calibrated differential pressure output in Pa"
 	};
@@ -60,8 +59,6 @@ main(int argc, char *  argv[])
 		[kFlussoFLS110OutputVariableIndexCalibratedDifferentialPressureOutput]  = kOutputVariableTypeDistribution
 	};
 	const char *                applicationDescription = "Flusso FLS110 Conversion Routines";
-	MeanAndVariance             meanAndVariance;
-	(void) outputVariableTypes;
 
 	/*
 	 *	Get command line arguments.
@@ -81,6 +78,8 @@ main(int argc, char *  argv[])
 		__LINE__
 	);
 
+	const bool isScalarOutputSelected = isSelectedOutputScalar(&arguments.common, outputVariableTypes, kFlussoFLS110OutputVariableIndexMax);
+
 	/*
 	 *	Start timing.
 	 */
@@ -91,41 +90,39 @@ main(int argc, char *  argv[])
 
 	/*
 	 *	Dispatch to the mode-specific kernel. The Monte Carlo loop lives
-	 *	inside `flussoFLS110CalculateOutputMonteCarlo`; UxHw mode runs a
+	 *	inside `FlussoFLS110CalculateOutputMonteCarlo`; UxHw mode runs a
 	 *	single distributional evaluation inside
-	 *	`flussoFLS110CalculateOutputUxHw`. Both take the fields they need as
+	 *	`FlussoFLS110CalculateOutputUxHw`. Both take the fields they need as
 	 *	scalars, so this is the only place that unpacks
 	 *	`CommandLineArguments` for the kernel.
 	 */
 	if (arguments.common.isMonteCarloMode)
 	{
-		calibratedSensorOutput = flussoFLS110CalculateOutputMonteCarlo(
-			arguments.common.numberOfMonteCarloIterations,
+		FlussoFLS110CalculateOutputMonteCarlo(
 			arguments.common.outputSelect,
+			arguments.common.numberOfMonteCarloIterations,
 			outputVariables,
 			monteCarloOutputSamples
 		);
 
 		/*
 		 *	Approximate the cost of the third phase of Monte Carlo
-		 *	(post-processing), by calculating the mean and variance.
+		 *	(post-processing), by calculating the mean and variance. The
+		 *	result is discarded, since only the cost matters here.
 		 */
-		meanAndVariance = calculateMeanAndVarianceOfDoubleSamples(
+		calculateMeanAndVarianceOfDoubleSamples(
 			monteCarloOutputSamples,
 			arguments.common.numberOfMonteCarloIterations
 		);
-		calibratedSensorOutput = meanAndVariance.mean;
 	}
 	else
 	{
-		calibratedSensorOutput = flussoFLS110CalculateOutputUxHw(
+		FlussoFLS110CalculateOutputUxHw(
 			arguments.common.outputSelect,
 			outputVariables,
 			monteCarloOutputSamples
 		);
 	}
-
-	(void) calibratedSensorOutput;
 
 	/*
 	 *	Stop timing.
@@ -147,7 +144,8 @@ main(int argc, char *  argv[])
 			outputVariables,
 			outputVariableNames,
 			kFlussoFLS110OutputVariableIndexMax,
-			applicationDescription
+			applicationDescription,
+			outputVariableTypes
 		);
 	}
 	else
@@ -158,7 +156,8 @@ main(int argc, char *  argv[])
 			outputVariables,
 			outputVariableNames,
 			outputVariableDescriptions,
-			monteCarloOutputSamples
+			monteCarloOutputSamples,
+			outputVariableTypes
 		);
 	}
 
@@ -195,7 +194,7 @@ main(int argc, char *  argv[])
 		saveMonteCarloDoubleDataToDataDotOutFile(
 			monteCarloOutputSamples,
 			(uint64_t) (cpuTimeUsedSeconds * 1000000),
-			arguments.common.numberOfMonteCarloIterations
+			isScalarOutputSelected ? 1 : arguments.common.numberOfMonteCarloIterations
 		);
 	}
 	free(monteCarloOutputSamples);

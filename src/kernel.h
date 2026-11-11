@@ -102,12 +102,12 @@ FlussoFLS110_calculateOutput(
  *	@param	inputVariables	: Array of size `kFlussoFLS110InputVariableIndexMax` to fill.
  */
 void
-FlussoFLS110_setInputVariablesViaUxHwCall(double * inputVariables);
+FlussoFLS110SetInputVariablesViaUxHwCall(double * inputVariables);
 
 /**
  *	@brief	Perform a single evaluation of the FLS110 conversion routine:
  *		sample the sensor's distributional inputs once via
- *		`FlussoFLS110_setInputVariablesViaUxHwCall()` and run the
+ *		`FlussoFLS110SetInputVariablesViaUxHwCall()` and run the
  *		conversion routine on them once. `UxHwDoubleUniformDist` returns
  *		the full input distributions in UxHw mode, yielding a fully
  *		distributional result. In Monte Carlo (compat) mode it returns a
@@ -120,7 +120,7 @@ FlussoFLS110_setInputVariablesViaUxHwCall(double * inputVariables);
  *	@return	double			: Returns the value of the selected output (or the differential pressure output when all outputs are selected).
  */
 double
-flussoFLS110SingleEvaluation(uint8_t outputSelect, double * outputVariables);
+FlussoFLS110SingleEvaluation(uint8_t outputSelect, double * outputVariables);
 
 /**
  *	@brief	UxHw-mode calculation kernel. Delegates to `flussoFLS110UxHw()`
@@ -138,7 +138,7 @@ flussoFLS110SingleEvaluation(uint8_t outputSelect, double * outputVariables);
  *	@return	double			: Returns the value of the selected output (or the differential pressure output when all outputs are selected).
  */
 double
-flussoFLS110CalculateOutputUxHw(
+FlussoFLS110CalculateOutputUxHw(
 	size_t      outputSelect,
 	double *    outputVariables,
 	double *    monteCarloOutputSamples);
@@ -150,8 +150,8 @@ flussoFLS110CalculateOutputUxHw(
  *		`monteCarloOutputSamples`. Writes per-output results (from the
  *		final iteration) into `outputVariables`.
  *
- *	@param	numberOfMonteCarloIterations	: Number of Monte Carlo iterations to run.
  *	@param	outputSelect		: Which output to calculate (or `kFlussoFLS110OutputVariableIndexMax` for all).
+ *	@param	numberOfMonteCarloIterations	: Number of Monte Carlo iterations to run.
  *					  A `size_t`, so that the caller passes
  *					  `CommonCommandLineArguments.outputSelect`
  *					  through unnarrowed: the narrowing to the
@@ -161,8 +161,8 @@ flussoFLS110CalculateOutputUxHw(
  *	@return	double			: Returns the value of the selected output for the final iteration.
  */
 double
-flussoFLS110CalculateOutputMonteCarlo(
-	size_t      numberOfMonteCarloIterations,
+FlussoFLS110CalculateOutputMonteCarlo(
 	size_t      outputSelect,
+	size_t      numberOfMonteCarloIterations,
 	double *    outputVariables,
 	double *    monteCarloOutputSamples);

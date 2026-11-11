@@ -37,7 +37,6 @@ printUsage(void)
 		"\t[-S, --select-output <output : int>] (Compute 0-indexed output. Calculate all possible outputs if equal to %d. Default value: %d.)\n"
 		"\t[-M, --multiple-executions <Number of executions : int (Default: 1)>] (Repeated execute kernel for benchmarking.)\n"
 		"\t[-T, --time] (Timing mode: Times and prints the timing of the kernel execution.)\n"
-		"\t[-b, --benchmarking] (Benchmarking mode: Generate outputs in format for benchmarking.)\n"
 		"\t[-j, --json] (Print output in JSON format.)\n"
 		"\t[-h, --help] (Display this help message.)\n",
 		kFlussoFLS110OutputVariableIndexMax,
@@ -48,7 +47,12 @@ printUsage(void)
 	return;
 }
 
-static void
+/**
+ *	@brief	Set the default values for the command-line arguments.
+ *
+ *	@param	arguments	: command-line arguments pointer.
+ */
+CommonConstantReturnType
 setDefaultCommandLineArguments(CommandLineArguments * arguments)
 {
 	/*
@@ -69,7 +73,7 @@ setDefaultCommandLineArguments(CommandLineArguments * arguments)
 	};
 #pragma GCC diagnostic pop
 
-	return;
+	return kCommonConstantReturnTypeSuccess;
 }
 
 #ifdef NO_OS_AVAILABLE
@@ -89,7 +93,10 @@ setNoOSCommandLineArguments(CommandLineArguments * arguments)
 	 *	demo-specific fields beyond `common`, and no step count to
 	 *	override (these sensor conversion routines simulate no path).
 	 */
-	setDefaultCommandLineArguments(arguments);
+	if (setDefaultCommandLineArguments(arguments) != kCommonConstantReturnTypeSuccess)
+	{
+		return kCommonConstantReturnTypeError;
+	}
 
 	arguments->common.numberOfMonteCarloIterations  = 1;
 	arguments->common.outputSelect                  = kFlussoFLS110OutputVariableIndexMax;
@@ -130,7 +137,10 @@ getCommandLineArguments(
 		return kCommonConstantReturnTypeError;
 	}
 
-	setDefaultCommandLineArguments(arguments);
+	if (setDefaultCommandLineArguments(arguments) != kCommonConstantReturnTypeSuccess)
+	{
+		return kCommonConstantReturnTypeError;
+	}
 
 	/*
 	 *	This application example has no application specific arguments.
@@ -184,7 +194,7 @@ getCommandLineArguments(
 	}
 
 	/*
-	 *	If a single output is selected, we must be in benchmarking mode or Monte Carlo mode.
+	 *	If a single output is selected, we must be in Monte Carlo mode.
 	 */
 	if (arguments->common.outputSelect > kFlussoFLS110OutputVariableIndexMax)
 	{
@@ -198,13 +208,13 @@ getCommandLineArguments(
 		return kCommonConstantReturnTypeError;
 	}
 	/*
-	 *	When all outputs are selected, we cannot be in benchmarking mode or Monte Carlo mode.
+	 *	When all outputs are selected, we cannot be in Monte Carlo mode.
 	 */
 	else if (arguments->common.outputSelect == kFlussoFLS110OutputVariableIndexMax)
 	{
-		if ((arguments->common.isBenchmarkingMode) || (arguments->common.isMonteCarloMode))
+		if (arguments->common.isMonteCarloMode)
 		{
-			fprintf(stderr, "Error: Please select a single output when in benchmarking mode or Monte Carlo mode.\n");
+			fprintf(stderr, "Error: Please select a single output when in Monte Carlo mode.\n");
 
 			return kCommonConstantReturnTypeError;
 		}
